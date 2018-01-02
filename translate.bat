@@ -8,7 +8,7 @@ if not exist opencc.exe goto openccdownload
 
 :openccdownload
 echo 正在下载opencc 请稍后……
-if exist D:\Programs\opencc\opencc.exe (xcopy /Y /V /D /Q D:\Programs\opencc\*.*
+if exist D:\Programs\AVCoverScraper\opencc\opencc.exe (xcopy /Y /V /D /Q D:\Programs\AVCoverScraper\opencc\*.* /EXCLUDE:?.txt
 ) else (
 curl -k -# -O -C - https://raw.githubusercontent.com/liuzj288/AVCoverScraper/master/opencc.zip
 )
@@ -19,7 +19,7 @@ if exist C:\Program Files\Bandizip\Bandizip.exe goto Bandizip
 echo 正在解压opencc.zip 请稍后……
 rem set path=“C:\Program Files\Bandizip”
 Bandizip.exe x opencc.zip
-Bandizip.exe x -o:D:\Programs\opencc\ opencc.zip
+Bandizip.exe x -o:D:\Programs\AVCoverScraper\opencc\ opencc.zip
 goto tw2sp
 
 :tw2sp
@@ -36,4 +36,6 @@ if exist *.ocd del *.ocd
 if exist *.dll del *.dll 
 if exist *.exe del *.exe 
 if exist zh*.txt del zh*.txt
+if exist ?.txt del ?.txt
 
+exit
