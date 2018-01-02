@@ -9,6 +9,7 @@ set length=3
 for /f "delims=" %%i in ("%cd%") do set folder=%%~ni
 set series=%folder%
 set translate=1
+set sample=1
 
 rem 录入下载信息
 set /p series=请键入番号前缀(默认为当前文件夹名%folder%)：
@@ -16,17 +17,17 @@ set /p begin=请输入起始序号(默认为%begin%)：
 set /p end=请输入结束序号(默认为%end%)：
 set /p length=请键入识别码后缀长度(默认为3位)：
 set /p web=请选择数据源网站(1:javbus;2:dmm;3:avmoo;4:aventertainments;5:aventertainments(旧)默认为1)：
-set /p translate=是否启用自动翻译(默认为1:启用)
+set /p sample=是否下载样图(默认为1:是)
 
 echo 正在检查本地文件，请稍后……
-if exist *.jpg for /f %%i in ('dir /s *.jpg^|find /i "个文件"') do set picturenum=%%i
-if exist *.jpg choice /c yn  /t 2 /d y /m 文件夹内发现%picturenum%张图片，继续运行将删除所有图片，是否继续 
-if errorlevel 2 goto end
-if errorlevel 1 goto clean
+if exist *.jpg (
+for /f %%i in ('dir /s *.jpg^|find /i "个文件"') do set picturenum=%%i
+choice /c yn  /t 2 /d y /m 文件夹内发现%picturenum%张图片，继续运行将删除所有图片，是否继续 
+if errorlevel 2 goto main
+if errorlevel 1 del *.jpg
+)
 
-
-:clean
-if exist *.jpg del *.jpg 
+:main
 
 for /l %%a in (%begin% 1 %end%) do (
 
@@ -38,7 +39,7 @@ rem 转码原始网页获得待处理文件temp.txt
 iconv.exe -c -f UTF-8 -t GBK %series%-!a:~-%length%!.txt > temp.txt
 del %series%-!a:~-%length%!.txt
 
-echo 提示：正在下载%series%-!a:~-%length%!封面（%%a/%end%），请稍后……
+echo 提示：正在下载%series%-!a:~-%length%!封面及样图（%%a/%end%），请稍后……
 
 grep "var img" temp.txt >covertemp.bat
 
@@ -62,6 +63,12 @@ if %web%==3 (curl -x 127.0.0.1:1080 -k -s -C - -o %series%-!a:~-%length%!.jpg ht
 if %web%==4 (curl -x 127.0.0.1:1080 -s -C - -o %series%-!a:~-%length%!.jpg http://imgs.aventertainments.com/new/bigcover/%add%%series%^-!a:~-%length%!.jpg)
 
 if %web%==5 (curl -x 127.0.0.1:1080 -s -C - -o %series%-!a:~-%length%!.jpg http://imgs.aventertainments.com/archive/bigcover/%add%%series%^-!a:~-%length%!.jpg)
+
+rem echo 正在下载%series%-!a:~-%length%!样图
+if %sample%==1 (
+if not exist %cd%\%series%-!a:~-%length%! md %cd%\%series%-!a:~-%length%!
+curl -x 127.0.0.1:1080 -k -L -s -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-1.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-1.jpg -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-2.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-2.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-3.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-3.jpg -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-4.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-4.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-5.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-5.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-6.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-6.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-7.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-7.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-8.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-8.jpg -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-9.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-9.jpg  -o %cd%\%series%^-!a:~-%length%!\%series%^-!a:~-%length%!^-10.jpg https://pics.dmm.co.jp/digital/video/%series%00!a:~-%length%!/%series%00!a:~-%length%!jp-10.jpg
+)
 
 
 rem 获取标题
@@ -117,25 +124,31 @@ if exist *. del *.
 echo %series%封面下载完毕，正在合并信息，请稍后……
 paste -d@ title.txt actress.txt date.txt keywords.txt maker.txt>titleactresstemp.txt
 sed -i "s#	##g" titleactresstemp.txt
-sed -i "s#@*$##g" titleactresstemp.txt
-sed -i "s#@@#@#g" titleactresstemp.txt
-sed -i "s#?##g" titleactresstemp.txt
-sed -i "s#*##g" titleactresstemp.txt
-sed -i "s#/# #g" titleactresstemp.txt
-sed -i "s#:# #g" titleactresstemp.txt
-sed -i "s#。# #g" titleactresstemp.txt
+sed -i "s#！# #g" titleactresstemp.txt
+rem sed -i "s#@*$##g" titleactresstemp.txt
+rem sed -i "s#@@#@#g" titleactresstemp.txt
+rem sed -i "s#?##g" titleactresstemp.txt
+rem sed -i "s#*##g" titleactresstemp.txt
+rem sed -i "s#/# #g" titleactresstemp.txt
+rem sed -i "s#:# #g" titleactresstemp.txt
+rem sed -i "s#。# #g" titleactresstemp.txt
 
-if exist D:\Programs\AVCoverScraper\translate.bat (call D:\Programs\AVCoverScraper\translate.bat
+rem 清理缓存
+if exist actress.txt del actress.txt
+if exist date.txt del date.txt
+if exist keywords.txt del keywords.txt
+if exist maker.txt del maker.txt
+if exist title.txt del title.txt
+if exist cover.bat del cover.bat
+
+if exist D:\Programs\AVCoverScraper\plugin\translate.bat (xcopy /Y /V /D /Q D:\Programs\AVCoverScraper\plugin\translate.bat
 ) else (
 curl -k -# -O -C - https://raw.githubusercontent.com/liuzj288/AVCoverScraper/master/translate.bat
+)
 call translate.bat
-)
 
-if exist D:\Programs\AVCoverScraper\batchrename.bat (call D:\Programs\AVCoverScraper\batchrename.bat
-) else (
-curl -k -# -O -C - https://raw.githubusercontent.com/liuzj288/AVCoverScraper/master/batchrename.bat
-call batchrename.bat
-)
+:end
+good bye
 
 pause
 exit
